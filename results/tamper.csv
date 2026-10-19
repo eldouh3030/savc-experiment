@@ -1,0 +1,5 @@
+trials,modification,detected,correctly_localized
+1000,payload_bitflip,1000,1000
+1000,timestamp_change,1000,1000
+1000,block_deletion,1000,1000
+1000,block_reorder,1000,1000

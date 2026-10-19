@@ -1,0 +1,71 @@
+parameter,value,defense,FPR
+forwarding_rate,0,"DMARC only",0
+forwarding_rate,0,"Whitelist only",0
+forwarding_rate,0,"Whitelist + DMARC",0
+forwarding_rate,0,"SAVC (VVC only)",0.005
+forwarding_rate,0,"SAVC (VVC + payment)",0.005
+forwarding_rate,0.01,"DMARC only",0.0092
+forwarding_rate,0.01,"Whitelist only",0
+forwarding_rate,0.01,"Whitelist + DMARC",0.0092
+forwarding_rate,0.01,"SAVC (VVC only)",0.005
+forwarding_rate,0.01,"SAVC (VVC + payment)",0.005
+forwarding_rate,0.02,"DMARC only",0.0216
+forwarding_rate,0.02,"Whitelist only",0
+forwarding_rate,0.02,"Whitelist + DMARC",0.0216
+forwarding_rate,0.02,"SAVC (VVC only)",0.005
+forwarding_rate,0.02,"SAVC (VVC + payment)",0.005
+forwarding_rate,0.03,"DMARC only",0.0322
+forwarding_rate,0.03,"Whitelist only",0
+forwarding_rate,0.03,"Whitelist + DMARC",0.0322
+forwarding_rate,0.03,"SAVC (VVC only)",0.005
+forwarding_rate,0.03,"SAVC (VVC + payment)",0.005
+forwarding_rate,0.05,"DMARC only",0.0518
+forwarding_rate,0.05,"Whitelist only",0
+forwarding_rate,0.05,"Whitelist + DMARC",0.0518
+forwarding_rate,0.05,"SAVC (VVC only)",0.005
+forwarding_rate,0.05,"SAVC (VVC + payment)",0.005
+forwarding_rate,0.075,"DMARC only",0.076
+forwarding_rate,0.075,"Whitelist only",0
+forwarding_rate,0.075,"Whitelist + DMARC",0.076
+forwarding_rate,0.075,"SAVC (VVC only)",0.005
+forwarding_rate,0.075,"SAVC (VVC + payment)",0.005
+forwarding_rate,0.1,"DMARC only",0.1012
+forwarding_rate,0.1,"Whitelist only",0
+forwarding_rate,0.1,"Whitelist + DMARC",0.1012
+forwarding_rate,0.1,"SAVC (VVC only)",0.005
+forwarding_rate,0.1,"SAVC (VVC + payment)",0.005
+unregistered_rate,0,"DMARC only",0.0322
+unregistered_rate,0,"Whitelist only",0
+unregistered_rate,0,"Whitelist + DMARC",0.0322
+unregistered_rate,0,"SAVC (VVC only)",0
+unregistered_rate,0,"SAVC (VVC + payment)",0
+unregistered_rate,0.01,"DMARC only",0.0322
+unregistered_rate,0.01,"Whitelist only",0
+unregistered_rate,0.01,"Whitelist + DMARC",0.0322
+unregistered_rate,0.01,"SAVC (VVC only)",0.0092
+unregistered_rate,0.01,"SAVC (VVC + payment)",0.0092
+unregistered_rate,0.02,"DMARC only",0.0322
+unregistered_rate,0.02,"Whitelist only",0
+unregistered_rate,0.02,"Whitelist + DMARC",0.0322
+unregistered_rate,0.02,"SAVC (VVC only)",0.0214
+unregistered_rate,0.02,"SAVC (VVC + payment)",0.0214
+unregistered_rate,0.03,"DMARC only",0.0322
+unregistered_rate,0.03,"Whitelist only",0
+unregistered_rate,0.03,"Whitelist + DMARC",0.0322
+unregistered_rate,0.03,"SAVC (VVC only)",0.031
+unregistered_rate,0.03,"SAVC (VVC + payment)",0.031
+unregistered_rate,0.05,"DMARC only",0.0322
+unregistered_rate,0.05,"Whitelist only",0
+unregistered_rate,0.05,"Whitelist + DMARC",0.0322
+unregistered_rate,0.05,"SAVC (VVC only)",0.0528
+unregistered_rate,0.05,"SAVC (VVC + payment)",0.0528
+unregistered_rate,0.075,"DMARC only",0.0322
+unregistered_rate,0.075,"Whitelist only",0
+unregistered_rate,0.075,"Whitelist + DMARC",0.0322
+unregistered_rate,0.075,"SAVC (VVC only)",0.0762
+unregistered_rate,0.075,"SAVC (VVC + payment)",0.0762
+unregistered_rate,0.1,"DMARC only",0.0322
+unregistered_rate,0.1,"Whitelist only",0
+unregistered_rate,0.1,"Whitelist + DMARC",0.0322
+unregistered_rate,0.1,"SAVC (VVC only)",0.0986
+unregistered_rate,0.1,"SAVC (VVC + payment)",0.0986

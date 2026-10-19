@@ -1,0 +1,56 @@
+class,is_attack,defense,mean_rate,min_rate,max_rate,mean_count
+"Legitimate",0,"DMARC only",1.000000,1.000000,1.000000,4824.400000
+"Legitimate",0,"Whitelist only",1.000000,1.000000,1.000000,4824.400000
+"Legitimate",0,"Whitelist + DMARC",1.000000,1.000000,1.000000,4824.400000
+"Legitimate",0,"SAVC (VVC only)",1.000000,1.000000,1.000000,4824.400000
+"Legitimate",0,"SAVC (VVC + payment)",1.000000,1.000000,1.000000,4824.400000
+"Legitimate (forwarded)",0,"DMARC only",0.000000,0.000000,0.000000,147.400000
+"Legitimate (forwarded)",0,"Whitelist only",1.000000,1.000000,1.000000,147.400000
+"Legitimate (forwarded)",0,"Whitelist + DMARC",0.000000,0.000000,0.000000,147.400000
+"Legitimate (forwarded)",0,"SAVC (VVC only)",1.000000,1.000000,1.000000,147.400000
+"Legitimate (forwarded)",0,"SAVC (VVC + payment)",1.000000,1.000000,1.000000,147.400000
+"Legitimate (unregistered)",0,"DMARC only",0.936213,0.869565,1.000000,28.200000
+"Legitimate (unregistered)",0,"Whitelist only",1.000000,1.000000,1.000000,28.200000
+"Legitimate (unregistered)",0,"Whitelist + DMARC",0.936213,0.869565,1.000000,28.200000
+"Legitimate (unregistered)",0,"SAVC (VVC only)",0.000000,0.000000,0.000000,28.200000
+"Legitimate (unregistered)",0,"SAVC (VVC + payment)",0.000000,0.000000,0.000000,28.200000
+"A1 Exact-domain spoofing",1,"DMARC only",1.000000,1.000000,1.000000,625.000000
+"A1 Exact-domain spoofing",1,"Whitelist only",0.000000,0.000000,0.000000,625.000000
+"A1 Exact-domain spoofing",1,"Whitelist + DMARC",1.000000,1.000000,1.000000,625.000000
+"A1 Exact-domain spoofing",1,"SAVC (VVC only)",1.000000,1.000000,1.000000,625.000000
+"A1 Exact-domain spoofing",1,"SAVC (VVC + payment)",1.000000,1.000000,1.000000,625.000000
+"A2 Look-alike venue clone",1,"DMARC only",0.000000,0.000000,0.000000,625.000000
+"A2 Look-alike venue clone",1,"Whitelist only",1.000000,1.000000,1.000000,625.000000
+"A2 Look-alike venue clone",1,"Whitelist + DMARC",1.000000,1.000000,1.000000,625.000000
+"A2 Look-alike venue clone",1,"SAVC (VVC only)",1.000000,1.000000,1.000000,625.000000
+"A2 Look-alike venue clone",1,"SAVC (VVC + payment)",1.000000,1.000000,1.000000,625.000000
+"A3 Compromised mailbox",1,"DMARC only",0.000000,0.000000,0.000000,625.000000
+"A3 Compromised mailbox",1,"Whitelist only",0.000000,0.000000,0.000000,625.000000
+"A3 Compromised mailbox",1,"Whitelist + DMARC",0.000000,0.000000,0.000000,625.000000
+"A3 Compromised mailbox",1,"SAVC (VVC only)",1.000000,1.000000,1.000000,625.000000
+"A3 Compromised mailbox",1,"SAVC (VVC + payment)",1.000000,1.000000,1.000000,625.000000
+"A4 Replay to new recipient",1,"DMARC only",0.000000,0.000000,0.000000,625.000000
+"A4 Replay to new recipient",1,"Whitelist only",0.000000,0.000000,0.000000,625.000000
+"A4 Replay to new recipient",1,"Whitelist + DMARC",0.000000,0.000000,0.000000,625.000000
+"A4 Replay to new recipient",1,"SAVC (VVC only)",1.000000,1.000000,1.000000,625.000000
+"A4 Replay to new recipient",1,"SAVC (VVC + payment)",1.000000,1.000000,1.000000,625.000000
+"A5 Replay after expiry",1,"DMARC only",0.000000,0.000000,0.000000,625.000000
+"A5 Replay after expiry",1,"Whitelist only",0.000000,0.000000,0.000000,625.000000
+"A5 Replay after expiry",1,"Whitelist + DMARC",0.000000,0.000000,0.000000,625.000000
+"A5 Replay after expiry",1,"SAVC (VVC only)",1.000000,1.000000,1.000000,625.000000
+"A5 Replay after expiry",1,"SAVC (VVC + payment)",1.000000,1.000000,1.000000,625.000000
+"A6 Content tampering",1,"DMARC only",0.500640,0.464000,0.531200,625.000000
+"A6 Content tampering",1,"Whitelist only",0.000000,0.000000,0.000000,625.000000
+"A6 Content tampering",1,"Whitelist + DMARC",0.500640,0.464000,0.531200,625.000000
+"A6 Content tampering",1,"SAVC (VVC only)",1.000000,1.000000,1.000000,625.000000
+"A6 Content tampering",1,"SAVC (VVC + payment)",1.000000,1.000000,1.000000,625.000000
+"A7 Forged VVC",1,"DMARC only",0.000000,0.000000,0.000000,625.000000
+"A7 Forged VVC",1,"Whitelist only",0.000000,0.000000,0.000000,625.000000
+"A7 Forged VVC",1,"Whitelist + DMARC",0.000000,0.000000,0.000000,625.000000
+"A7 Forged VVC",1,"SAVC (VVC only)",1.000000,1.000000,1.000000,625.000000
+"A7 Forged VVC",1,"SAVC (VVC + payment)",1.000000,1.000000,1.000000,625.000000
+"A8 Payment redirection (stolen key)",1,"DMARC only",0.000000,0.000000,0.000000,625.000000
+"A8 Payment redirection (stolen key)",1,"Whitelist only",0.000000,0.000000,0.000000,625.000000
+"A8 Payment redirection (stolen key)",1,"Whitelist + DMARC",0.000000,0.000000,0.000000,625.000000
+"A8 Payment redirection (stolen key)",1,"SAVC (VVC only)",0.000000,0.000000,0.000000,625.000000
+"A8 Payment redirection (stolen key)",1,"SAVC (VVC + payment)",1.000000,1.000000,1.000000,625.000000

@@ -1,0 +1,13 @@
+registry_size,operation,median_us,min_us,max_us
+1000,issue_with_ledger,2.77587,2.75709,2.84143
+1000,verify_registry_only,1.54505,1.51755,1.5495
+1000,verify_with_ledger_check,2.65479,2.6154,2.69168
+10000,issue_with_ledger,8.0003,2.76607,8.26584
+10000,verify_registry_only,1.54728,1.53815,1.58245
+10000,verify_with_ledger_check,2.64419,2.6112,2.66232
+100000,issue_with_ledger,2.77366,2.75894,2.97573
+100000,verify_registry_only,1.58172,1.5568,1.59626
+100000,verify_with_ledger_check,2.68989,2.66468,2.69339
+1000000,issue_with_ledger,2.80107,2.7546,4.69338
+1000000,verify_registry_only,1.62799,1.60788,1.6594
+1000000,verify_with_ledger_check,2.6941,2.66246,2.79181
