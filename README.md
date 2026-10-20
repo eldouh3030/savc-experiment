@@ -17,6 +17,7 @@ This repository contains the single-file C++17 program that produces every table
 | `scripts/plots.py` | Draws Figs. 5–7 from the CSV files |
 | `scripts/diagrams.py` | Draws the architecture figures (Figs. 1–4) |
 | `figures/` | All paper figures (PNG, plus PDF/SVG where available) |
+| `formal/` | Tamarin model of the Verification Bridge mode and its verification output (Section 5.2) |
 
 ## Build and run
 
@@ -92,3 +93,13 @@ If you use this code, please cite the paper (citation details will be added afte
 ## License
 
 MIT License. See `LICENSE`.
+
+## Formal verification (Tamarin)
+
+`formal/savc.spthy` is the symbolic model of the Verification Bridge mode used in Section 5.2 of the paper. It was verified with Tamarin 1.10.0 and Maude 3.5:
+
+```
+tamarin-prover --prove formal/savc.spthy
+```
+
+All ten lemmas complete in a few seconds. The expected outcome, recorded in `formal/tamarin_summary.txt`, is that the authentication, key-secrecy, and payment-safety lemmas are verified, while `payment_safety_vvc_only` and the two ablation lemmas are falsified with attack traces. The falsified lemmas show that the payment check, recipient binding, and content digest are each necessary. On Windows, Tamarin runs under WSL.

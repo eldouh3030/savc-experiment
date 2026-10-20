@@ -1,0 +1,504 @@
+maude tool: 'maude'
+ checking version: 3.5. OK.
+ checking installation: OK.
+[Theory SAVC_VerificationBridge] Theory loaded
+[Theory SAVC_VerificationBridge] Theory translated
+[Theory SAVC_VerificationBridge] Derivation checks started
+[Theory SAVC_VerificationBridge] Derivation checks ended
+[Theory SAVC_VerificationBridge] Theory closed
+[Saturating Sources] Step 1 (Max 5)
+[Saturating Sources] Done
+theory SAVC_VerificationBridge begin
+
+// Function signature and definition of the equational theory E
+
+functions: fst/1, h/1, mac/2, pair/2, snd/1
+equations: fst(<x.1, x.2>) = x.1, snd(<x.1, x.2>) = x.2
+
+
+
+
+
+
+
+rule (modulo E) Register_Venue:
+   [ Fr( ~k ), Fr( ~acc ) ]
+  --[ KeyGen( $V, ~k ), AccountReg( $V, ~acc ), OnlyOnce( $V ) ]->
+   [ !RepKey( $V, ~k ), !Account( $V, ~acc ) ]
+
+  /* has exactly the trivial AC variant */
+
+rule (modulo E) Reveal_Key:
+   [ !RepKey( V, k ) ] --[ Compromised( V ) ]-> [ Out( k ) ]
+
+  /* has exactly the trivial AC variant */
+
+rule (modulo E) Revoke_Key:
+   [ !RepKey( V, k ) ] --[ Revoked( V ) ]-> [ ]
+
+  /* has exactly the trivial AC variant */
+
+rule (modulo E) Rep_Request:
+   [ !RepKey( V, k ), !Account( V, acc ), Fr( ~body ) ]
+  --[ Sent( V, $A, ~body, acc ) ]->
+   [ Out( <'reg', V, $A, ~body, acc, mac(k, <'reg', V, $A, ~body, acc>)> ) ]
+
+  /* has exactly the trivial AC variant */
+
+rule (modulo E) Platform_Issue:
+   [
+   In( <'reg', V, A, body, acc, mac(k, <'reg', V, A, body, acc>)> ),
+   !RepKey( V, k ), Fr( ~ref )
+   ]
+  --[ Issued( ~ref, V, A, body, acc ), KeyCheck( V ) ]->
+   [
+   !Rec( ~ref, V, A, h(<body, acc>) ),
+   Out( <~ref, mac(k, <V, A, h(<body, acc>)>)> )
+   ]
+
+  /* has exactly the trivial AC variant */
+
+rule (modulo E) Expire:
+   [ !Rec( ref, V, A, d ) ] --[ Expired( ref ) ]-> [ ]
+
+  /* has exactly the trivial AC variant */
+
+rule (modulo E) Author_Verify_VVC:
+   [
+   In( <ref, V, body, acc, mac(k, <V, A, h(<body, acc>)>)> ),
+   !Rec( ref, V, A, h(<body, acc>) ), !RepKey( V, k )
+   ]
+  --[
+  AcceptVVC( A, V, body, acc ), AcceptRef( ref ), ValidityCheck( ref ),
+  KeyCheck( V )
+  ]->
+   [ ]
+
+  /* has exactly the trivial AC variant */
+
+rule (modulo E) Author_Verify_Full:
+   [
+   In( <ref, V, body, acc, mac(k, <V, A, h(<body, acc>)>)> ),
+   !Rec( ref, V, A, h(<body, acc>) ), !RepKey( V, k ), !Account( V, acc )
+   ]
+  --[
+  AcceptFull( A, V, body, acc ), AcceptRef( ref ), ValidityCheck( ref ),
+  KeyCheck( V )
+  ]->
+   [ ]
+
+  /* has exactly the trivial AC variant */
+
+rule (modulo E) Ablation_NoRecipientBinding:
+   [
+   In( <ref, V, body, acc, mac(k, <V, B, h(<body, acc>)>)> ),
+   !Rec( ref, V, B, h(<body, acc>) ), !RepKey( V, k ), !Account( V, acc )
+   ]
+  --[ AcceptNoBinding( $A, V, body, acc ) ]->
+   [ ]
+
+  /* has exactly the trivial AC variant */
+
+rule (modulo E) Ablation_NoDigest:
+   [
+   In( <ref, V, body, acc, tag> ), !Rec( ref, V, A, d ), !RepKey( V, k ),
+   !Account( V, acc )
+   ]
+  --[ AcceptNoDigest( A, V, body, acc ) ]->
+   [ ]
+
+  /* has exactly the trivial AC variant */
+
+restriction validity_check:
+  "∀ ref #i #e.
+    ((ValidityCheck( ref ) @ #i) ∧ (Expired( ref ) @ #e)) ⇒ (#i < #e)"
+  // safety formula
+
+restriction key_status_check:
+  "∀ V #i #r. ((KeyCheck( V ) @ #i) ∧ (Revoked( V ) @ #r)) ⇒ (#i < #r)"
+  // safety formula
+
+restriction one_registration_per_venue:
+  "∀ V #i #j. ((OnlyOnce( V ) @ #i) ∧ (OnlyOnce( V ) @ #j)) ⇒ (#i = #j)"
+  // safety formula
+
+lemma executable_vvc:
+  exists-trace
+  "∃ A V b acc #i #j.
+    ((Sent( V, A, b, acc ) @ #j) ∧ (AcceptVVC( A, V, b, acc ) @ #i)) ∧
+    (¬(∃ #c. Compromised( V ) @ #c))"
+/*
+guarded formula characterizing all satisfying traces:
+"∃ A V b acc #i #j.
+  (Sent( V, A, b, acc ) @ #j) ∧ (AcceptVVC( A, V, b, acc ) @ #i)
+ ∧
+  ∀ #c. (Compromised( V ) @ #c) ⇒ ⊥"
+*/
+simplify
+solve( !Rec( ref, V, $A, h(<~body, acc>) ) ▶₁ #i )
+  case Platform_Issue
+  solve( !RepKey( $V, k ) ▶₂ #i )
+    case Register_Venue
+    solve( !RepKey( $V, k.1 ) ▶₀ #j )
+      case Register_Venue
+      solve( !Account( $V, acc ) ▶₁ #j )
+        case Register_Venue
+        solve( !KU( ~body ) @ #vk.7 )
+          case Rep_Request
+          solve( !KU( ~ref ) @ #vk.2 )
+            case Platform_Issue
+            solve( !KU( ~acc ) @ #vk.11 )
+              case Rep_Request
+              solve( !KU( mac(~k, <$V, $A, h(<~body, ~acc>)>) ) @ #vk.13 )
+                case Platform_Issue
+                solve( !KU( mac(~k, <'reg', $V, $A, ~body, ~acc>) ) @ #vk.16 )
+                  case Rep_Request
+                  SOLVED // trace found
+                qed
+              qed
+            qed
+          qed
+        qed
+      qed
+    qed
+  qed
+qed
+
+lemma executable_full:
+  exists-trace
+  "∃ A V b acc #i #j.
+    ((Sent( V, A, b, acc ) @ #j) ∧ (AcceptFull( A, V, b, acc ) @ #i)) ∧
+    (¬(∃ #c. Compromised( V ) @ #c))"
+/*
+guarded formula characterizing all satisfying traces:
+"∃ A V b acc #i #j.
+  (Sent( V, A, b, acc ) @ #j) ∧ (AcceptFull( A, V, b, acc ) @ #i)
+ ∧
+  ∀ #c. (Compromised( V ) @ #c) ⇒ ⊥"
+*/
+simplify
+solve( !Rec( ref, V, $A, h(<~body, acc>) ) ▶₁ #i )
+  case Platform_Issue
+  solve( !RepKey( $V, k ) ▶₂ #i )
+    case Register_Venue
+    solve( !Account( $V, acc ) ▶₃ #i )
+      case Register_Venue
+      solve( !RepKey( $V, k.1 ) ▶₀ #j )
+        case Register_Venue
+        solve( !Account( $V, ~acc ) ▶₁ #j )
+          case Register_Venue
+          solve( !KU( ~body ) @ #vk.7 )
+            case Rep_Request
+            solve( !KU( ~ref ) @ #vk.2 )
+              case Platform_Issue
+              solve( !KU( ~acc ) @ #vk.11 )
+                case Rep_Request
+                solve( !KU( mac(~k, <$V, $A, h(<~body, ~acc>)>) ) @ #vk.13 )
+                  case Platform_Issue
+                  solve( !KU( mac(~k, <'reg', $V, $A, ~body, ~acc>) ) @ #vk.16 )
+                    case Rep_Request
+                    SOLVED // trace found
+                  qed
+                qed
+              qed
+            qed
+          qed
+        qed
+      qed
+    qed
+  qed
+qed
+
+lemma key_secrecy:
+  all-traces
+  "∀ V k #i.
+    (KeyGen( V, k ) @ #i) ⇒
+    ((¬(∃ #j. K( k ) @ #j)) ∨ (∃ #c. Compromised( V ) @ #c))"
+/*
+guarded formula characterizing all counter-examples:
+"∃ V k #i.
+  (KeyGen( V, k ) @ #i)
+ ∧
+  (∃ #j. (K( k ) @ #j)) ∧ (∀ #c. (Compromised( V ) @ #c) ⇒ ⊥)"
+*/
+simplify
+solve( !KU( ~k ) @ #vk )
+  case Reveal_Key
+  by contradiction /* from formulas */
+qed
+
+lemma authentication_vvc:
+  all-traces
+  "∀ A V b acc #i.
+    (AcceptVVC( A, V, b, acc ) @ #i) ⇒
+    ((∃ #j. (Sent( V, A, b, acc ) @ #j) ∧ (#j < #i)) ∨
+     (∃ #c. (Compromised( V ) @ #c) ∧ (#c < #i)))"
+/*
+guarded formula characterizing all counter-examples:
+"∃ A V b acc #i.
+  (AcceptVVC( A, V, b, acc ) @ #i)
+ ∧
+  (∀ #j. (Sent( V, A, b, acc ) @ #j) ⇒ ¬(#j < #i)) ∧
+  (∀ #c. (Compromised( V ) @ #c) ⇒ ¬(#c < #i))"
+*/
+simplify
+solve( !Rec( ref, V, A, h(<b, acc>) ) ▶₁ #i )
+  case Platform_Issue
+  solve( !RepKey( $V, k ) ▶₂ #i )
+    case Register_Venue
+    solve( !KU( mac(~k, <'reg', $V, A, b, acc>) ) @ #vk.16 )
+      case Rep_Request
+      by contradiction /* from formulas */
+    next
+      case c_mac
+      solve( !KU( ~k ) @ #vk.21 )
+        case Reveal_Key
+        by contradiction /* from formulas */
+      qed
+    qed
+  qed
+qed
+
+lemma authentication_full:
+  all-traces
+  "∀ A V b acc #i.
+    (AcceptFull( A, V, b, acc ) @ #i) ⇒
+    ((∃ #j. (Sent( V, A, b, acc ) @ #j) ∧ (#j < #i)) ∨
+     (∃ #c. (Compromised( V ) @ #c) ∧ (#c < #i)))"
+/*
+guarded formula characterizing all counter-examples:
+"∃ A V b acc #i.
+  (AcceptFull( A, V, b, acc ) @ #i)
+ ∧
+  (∀ #j. (Sent( V, A, b, acc ) @ #j) ⇒ ¬(#j < #i)) ∧
+  (∀ #c. (Compromised( V ) @ #c) ⇒ ¬(#c < #i))"
+*/
+simplify
+solve( !Rec( ref, V, A, h(<b, acc>) ) ▶₁ #i )
+  case Platform_Issue
+  solve( !RepKey( $V, k ) ▶₂ #i )
+    case Register_Venue
+    solve( !Account( $V, acc ) ▶₃ #i )
+      case Register_Venue
+      solve( !KU( ~acc ) @ #vk.11 )
+        case Rep_Request
+        solve( !KU( mac(~k, <'reg', $V, A, b, ~acc>) ) @ #vk.16 )
+          case Rep_Request
+          by contradiction /* from formulas */
+        next
+          case c_mac
+          solve( !KU( ~k ) @ #vk.21 )
+            case Reveal_Key
+            by contradiction /* from formulas */
+          qed
+        qed
+      qed
+    qed
+  qed
+qed
+
+lemma payment_safety_full:
+  all-traces
+  "∀ A V b acc #i.
+    (AcceptFull( A, V, b, acc ) @ #i) ⇒
+    (∃ #j. (AccountReg( V, acc ) @ #j) ∧ (#j < #i))"
+/*
+guarded formula characterizing all counter-examples:
+"∃ A V b acc #i.
+  (AcceptFull( A, V, b, acc ) @ #i)
+ ∧
+  ∀ #j. (AccountReg( V, acc ) @ #j) ⇒ ¬(#j < #i)"
+*/
+simplify
+solve( !Rec( ref, V, A, h(<b, acc>) ) ▶₁ #i )
+  case Platform_Issue
+  solve( !RepKey( $V, k ) ▶₂ #i )
+    case Register_Venue
+    solve( !Account( $V, acc ) ▶₃ #i )
+      case Register_Venue
+      by contradiction /* from formulas */
+    qed
+  qed
+qed
+
+lemma payment_safety_vvc_only:
+  all-traces
+  "∀ A V b acc #i.
+    (AcceptVVC( A, V, b, acc ) @ #i) ⇒
+    (∃ #j. (AccountReg( V, acc ) @ #j) ∧ (#j < #i))"
+/*
+guarded formula characterizing all counter-examples:
+"∃ A V b acc #i.
+  (AcceptVVC( A, V, b, acc ) @ #i)
+ ∧
+  ∀ #j. (AccountReg( V, acc ) @ #j) ⇒ ¬(#j < #i)"
+*/
+simplify
+solve( !Rec( ref, V, A, h(<b, acc>) ) ▶₁ #i )
+  case Platform_Issue
+  solve( !RepKey( $V, k ) ▶₂ #i )
+    case Register_Venue
+    solve( !KU( mac(~k, <'reg', $V, A, b, acc>) ) @ #vk.16 )
+      case c_mac
+      solve( !KU( ~k ) @ #vk.21 )
+        case Reveal_Key
+        solve( !KU( ~ref ) @ #vk.4 )
+          case Platform_Issue
+          solve( !KU( mac(~k, <$V, A, h(<b, acc>)>) ) @ #vk.19 )
+            case Platform_Issue
+            SOLVED // trace found
+          qed
+        qed
+      qed
+    qed
+  qed
+qed
+
+lemma compromise_enables_forgery:
+  exists-trace
+  "∃ A V b acc #i.
+    (AcceptVVC( A, V, b, acc ) @ #i) ∧ (¬(∃ #j. Sent( V, A, b, acc ) @ #j))"
+/*
+guarded formula characterizing all satisfying traces:
+"∃ A V b acc #i.
+  (AcceptVVC( A, V, b, acc ) @ #i) ∧ ∀ #j. (Sent( V, A, b, acc ) @ #j) ⇒ ⊥"
+*/
+simplify
+solve( !Rec( ref, V, A, h(<b, acc>) ) ▶₁ #i )
+  case Platform_Issue
+  solve( !RepKey( $V, k ) ▶₂ #i )
+    case Register_Venue
+    solve( !KU( mac(~k, <'reg', $V, A, b, acc>) ) @ #vk.16 )
+      case c_mac
+      solve( !KU( ~k ) @ #vk.21 )
+        case Reveal_Key
+        solve( !KU( ~ref ) @ #vk.4 )
+          case Platform_Issue
+          solve( !KU( mac(~k, <$V, A, h(<b, acc>)>) ) @ #vk.19 )
+            case Platform_Issue
+            SOLVED // trace found
+          qed
+        qed
+      qed
+    qed
+  qed
+qed
+
+lemma ablation_no_binding_breaks_authentication:
+  all-traces
+  "∀ A V b acc #i.
+    (AcceptNoBinding( A, V, b, acc ) @ #i) ⇒
+    ((∃ #j. Sent( V, A, b, acc ) @ #j) ∨ (∃ #c. Compromised( V ) @ #c))"
+/*
+guarded formula characterizing all counter-examples:
+"∃ A V b acc #i.
+  (AcceptNoBinding( A, V, b, acc ) @ #i)
+ ∧
+  (∀ #j. (Sent( V, A, b, acc ) @ #j) ⇒ ⊥) ∧
+  (∀ #c. (Compromised( V ) @ #c) ⇒ ⊥)"
+*/
+simplify
+solve( !Rec( ref, V, B, h(<b, acc>) ) ▶₁ #i )
+  case Platform_Issue
+  solve( !RepKey( $V, k ) ▶₂ #i )
+    case Register_Venue
+    solve( !Account( $V, acc ) ▶₃ #i )
+      case Register_Venue
+      solve( !KU( ~acc ) @ #vk.11 )
+        case Rep_Request
+        solve( !KU( mac(~k, <'reg', $V, B, b, ~acc>) ) @ #vk.16 )
+          case Rep_Request
+          solve( !KU( ~ref ) @ #vk.5 )
+            case Platform_Issue
+            solve( !KU( ~body ) @ #vk.13 )
+              case Rep_Request
+              solve( !KU( mac(~k, <$V, $A, h(<~body, ~acc>)>) ) @ #vk.14 )
+                case Platform_Issue
+                SOLVED // trace found
+              qed
+            qed
+          qed
+        qed
+      qed
+    qed
+  qed
+qed
+
+lemma ablation_no_digest_breaks_authentication:
+  all-traces
+  "∀ A V b acc #i.
+    (AcceptNoDigest( A, V, b, acc ) @ #i) ⇒
+    ((∃ #j. Sent( V, A, b, acc ) @ #j) ∨ (∃ #c. Compromised( V ) @ #c))"
+/*
+guarded formula characterizing all counter-examples:
+"∃ A V b acc #i.
+  (AcceptNoDigest( A, V, b, acc ) @ #i)
+ ∧
+  (∀ #j. (Sent( V, A, b, acc ) @ #j) ⇒ ⊥) ∧
+  (∀ #c. (Compromised( V ) @ #c) ⇒ ⊥)"
+*/
+simplify
+solve( !Rec( ref, V, A, d ) ▶₁ #i )
+  case Platform_Issue
+  solve( !RepKey( $V, k ) ▶₂ #i )
+    case Register_Venue
+    solve( !Account( $V, acc ) ▶₃ #i )
+      case Register_Venue
+      solve( !KU( ~acc ) @ #vk.9 )
+        case Rep_Request
+        solve( !KU( mac(~k, <'reg', $V, A, body, acc.1>) ) @ #vk.18 )
+          case Rep_Request
+          solve( !KU( ~ref ) @ #vk.5 )
+            case Platform_Issue
+            solve( !KU( ~body ) @ #vk.17 )
+              case Rep_Request
+              SOLVED // trace found
+            qed
+          qed
+        qed
+      qed
+    qed
+  qed
+qed
+
+
+
+
+
+
+
+
+
+
+
+/* All wellformedness checks were successful. */
+
+/*
+Generated from:
+Tamarin version 1.10.0
+Maude version 3.5
+Git revision: cb62c305f8c8b8c1e664152aa33c95b7b8d5ef32, branch: master
+Compiled at: 2024-10-30 11:11:02.432289291 UTC
+*/
+
+end
+
+==============================================================================
+summary of summaries:
+
+analyzed: savc.spthy
+
+  processing time: 4.00s
+  
+  executable_vvc (exists-trace): verified (11 steps)
+  executable_full (exists-trace): verified (12 steps)
+  key_secrecy (all-traces): verified (3 steps)
+  authentication_vvc (all-traces): verified (7 steps)
+  authentication_full (all-traces): verified (9 steps)
+  payment_safety_full (all-traces): verified (5 steps)
+  payment_safety_vvc_only (all-traces): falsified - found trace (8 steps)
+  compromise_enables_forgery (exists-trace): verified (8 steps)
+  ablation_no_binding_breaks_authentication (all-traces): falsified - found trace (10 steps)
+  ablation_no_digest_breaks_authentication (all-traces): falsified - found trace (9 steps)
+
+==============================================================================

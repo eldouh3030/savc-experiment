@@ -1,0 +1,188 @@
+theory SAVC_VerificationBridge
+begin
+
+/*
+  Symbolic model of the SAVC Verification Bridge mode.
+
+  Parties
+    - Venue representative: holds a signing key k registered for venue V.
+    - Intermediary (platform): keeps the venue registry, the VVC records,
+      and the verified payment accounts.
+    - Author: receives email from the network and verifies it on the platform,
+      which the author reaches through its known address (modelled as an
+      authentic, confidential channel, i.e. the verification rule itself).
+  Attacker
+    - Dolev-Yao control of the email network: reads, drops, replays, alters,
+      and forges any email; may reveal a representative's key (compromise).
+
+  Abstractions
+    - The authenticator is a keyed MAC with no algebraic properties
+      (HMAC-SHA256 in the implementation, EdDSA in the signature variant).
+    - Expiry and revocation are platform state changes; the platform's status
+      checks are encoded as restrictions on the order of events.
+*/
+
+builtins: hashing
+functions: mac/2
+
+/* ---------------------------------------------------------------- setup */
+
+rule Register_Venue:
+    [ Fr(~k), Fr(~acc) ]
+  --[ KeyGen($V, ~k), AccountReg($V, ~acc), OnlyOnce($V) ]->
+    [ !RepKey($V, ~k), !Account($V, ~acc) ]
+
+/* Compromise of the representative's signing credentials */
+rule Reveal_Key:
+    [ !RepKey(V, k) ]
+  --[ Compromised(V) ]->
+    [ Out(k) ]
+
+/* Revocation of a compromised key by the intermediary */
+rule Revoke_Key:
+    [ !RepKey(V, k) ]
+  --[ Revoked(V) ]->
+    [ ]
+
+/* ---------------------------------------------------------------- issuance */
+
+/* The representative authenticates a registration request with its key.
+   An honest representative only names a verified account of its venue.   */
+rule Rep_Request:
+    [ !RepKey(V, k), !Account(V, acc), Fr(~body) ]
+  --[ Sent(V, $A, ~body, acc) ]->
+    [ Out(<'reg', V, $A, ~body, acc, mac(k, <'reg', V, $A, ~body, acc>)>) ]
+
+/* The intermediary accepts any request carrying a valid MAC under an active
+   key (it cannot distinguish an attacker who holds a stolen key).          */
+rule Platform_Issue:
+    let d   = h(<body, acc>)
+        tag = mac(k, <V, A, d>)
+    in
+    [ In(<'reg', V, A, body, acc, mac(k, <'reg', V, A, body, acc>)>),
+      !RepKey(V, k), Fr(~ref) ]
+  --[ Issued(~ref, V, A, body, acc), KeyCheck(V) ]->
+    [ !Rec(~ref, V, A, d), Out(<~ref, tag>) ]
+
+/* Expiry of a VVC record */
+rule Expire:
+    [ !Rec(ref, V, A, d) ]
+  --[ Expired(ref) ]->
+    [ ]
+
+/* ---------------------------------------------------------------- verification
+   The author A takes an email from the (attacker-controlled) network and
+   submits the reference and authenticator on the platform. The rule fires
+   only for author A, so the recipient binding is the identity of the
+   verifying author.                                                         */
+
+/* Checks 1-6 of Fig. 3b: record, binding, digest, validity, key status, MAC */
+rule Author_Verify_VVC:
+    let d = h(<body, acc>) in
+    [ In(<ref, V, body, acc, mac(k, <V, A, d>)>),
+      !Rec(ref, V, A, d), !RepKey(V, k) ]
+  --[ AcceptVVC(A, V, body, acc), AcceptRef(ref), ValidityCheck(ref), KeyCheck(V) ]->
+    [ ]
+
+/* Full procedure: checks 1-7, adding the payment-account check */
+rule Author_Verify_Full:
+    let d = h(<body, acc>) in
+    [ In(<ref, V, body, acc, mac(k, <V, A, d>)>),
+      !Rec(ref, V, A, d), !RepKey(V, k), !Account(V, acc) ]
+  --[ AcceptFull(A, V, body, acc), AcceptRef(ref), ValidityCheck(ref), KeyCheck(V) ]->
+    [ ]
+
+
+/* ---------------------------------------------------------------- ablations
+   Deliberately weakened verification rules, used only to show that each
+   check is necessary. They are never part of SAVC.                          */
+
+/* Without recipient binding: the record is looked up without its recipient. */
+rule Ablation_NoRecipientBinding:
+    let d = h(<body, acc>) in
+    [ In(<ref, V, body, acc, mac(k, <V, B, d>)>),
+      !Rec(ref, V, B, d), !RepKey(V, k), !Account(V, acc) ]
+  --[ AcceptNoBinding($A, V, body, acc) ]->
+    [ ]
+
+/* Without the content digest: the received body is not compared with the record. */
+rule Ablation_NoDigest:
+    [ In(<ref, V, body, acc, tag>),
+      !Rec(ref, V, A, d), !RepKey(V, k), !Account(V, acc) ]
+  --[ AcceptNoDigest(A, V, body, acc) ]->
+    [ ]
+
+/* The platform's status checks: a record is valid only before it expires,
+   and a key is usable (for issuance and verification) only before it is
+   revoked. These restrictions encode checks 4 and 5 of Fig. 3b.           */
+restriction validity_check:
+  "All ref #i #e. ValidityCheck(ref)@i & Expired(ref)@e ==> #i < #e"
+
+restriction key_status_check:
+  "All V #i #r. KeyCheck(V)@i & Revoked(V)@r ==> #i < #r"
+
+restriction one_registration_per_venue:
+  "All V #i #j. OnlyOnce(V)@i & OnlyOnce(V)@j ==> #i = #j"
+
+/* ---------------------------------------------------------------- lemmas */
+
+/* Sanity: honest issuance and acceptance are possible in both variants. */
+lemma executable_vvc:
+  exists-trace
+  "Ex A V b acc #i #j. Sent(V, A, b, acc)@j & AcceptVVC(A, V, b, acc)@i
+     & not (Ex #c. Compromised(V)@c)"
+
+lemma executable_full:
+  exists-trace
+  "Ex A V b acc #i #j. Sent(V, A, b, acc)@j & AcceptFull(A, V, b, acc)@i
+     & not (Ex #c. Compromised(V)@c)"
+
+/* G4/secrecy: a representative key stays secret unless it is revealed. */
+lemma key_secrecy:
+  "All V k #i. KeyGen(V, k)@i ==>
+      not (Ex #j. K(k)@j) | (Ex #c. Compromised(V)@c)"
+
+/* G1+G2: authentication with recipient and content binding (A1-A7).
+   Any accepted message was sent by the venue to exactly this author, with
+   exactly this content and payment account, unless the key was compromised. */
+lemma authentication_vvc:
+  "All A V b acc #i. AcceptVVC(A, V, b, acc)@i ==>
+      (Ex #j. Sent(V, A, b, acc)@j & #j < #i)
+    | (Ex #c. Compromised(V)@c & #c < #i)"
+
+lemma authentication_full:
+  "All A V b acc #i. AcceptFull(A, V, b, acc)@i ==>
+      (Ex #j. Sent(V, A, b, acc)@j & #j < #i)
+    | (Ex #c. Compromised(V)@c & #c < #i)"
+
+/* G3: payment safety of the full procedure holds even under key compromise
+   (A8): an accepted fee request always names a verified account.          */
+lemma payment_safety_full:
+  "All A V b acc #i. AcceptFull(A, V, b, acc)@i ==>
+      Ex #j. AccountReg(V, acc)@j & #j < #i"
+
+/* Ablation: without the payment check, an attacker with a stolen key can
+   make an author accept a fee request to an unregistered account (A8).
+   This lemma is expected to be FALSIFIED; Tamarin returns the attack trace. */
+lemma payment_safety_vvc_only:
+  "All A V b acc #i. AcceptVVC(A, V, b, acc)@i ==>
+      Ex #j. AccountReg(V, acc)@j & #j < #i"
+
+/* Sanity: with a compromised key the attacker can indeed forge acceptances,
+   so the compromise clause in the authentication lemmas is not vacuous.   */
+lemma compromise_enables_forgery:
+  exists-trace
+  "Ex A V b acc #i. AcceptVVC(A, V, b, acc)@i & not (Ex #j. Sent(V, A, b, acc)@j)"
+
+/* Ablation results (expected FALSIFIED): without recipient binding a genuine
+   message can be replayed to another author (A4); without the digest check
+   a genuine message can be altered (A6), even with no key compromise.     */
+lemma ablation_no_binding_breaks_authentication:
+  "All A V b acc #i. AcceptNoBinding(A, V, b, acc)@i ==>
+      (Ex #j. Sent(V, A, b, acc)@j) | (Ex #c. Compromised(V)@c)"
+
+lemma ablation_no_digest_breaks_authentication:
+  "All A V b acc #i. AcceptNoDigest(A, V, b, acc)@i ==>
+      (Ex #j. Sent(V, A, b, acc)@j) | (Ex #c. Compromised(V)@c)"
+
+end

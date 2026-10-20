@@ -1,0 +1,18 @@
+summary of summaries:
+
+analyzed: savc.spthy
+
+  processing time: 4.00s
+  
+  executable_vvc (exists-trace): verified (11 steps)
+  executable_full (exists-trace): verified (12 steps)
+  key_secrecy (all-traces): verified (3 steps)
+  authentication_vvc (all-traces): verified (7 steps)
+  authentication_full (all-traces): verified (9 steps)
+  payment_safety_full (all-traces): verified (5 steps)
+  payment_safety_vvc_only (all-traces): falsified - found trace (8 steps)
+  compromise_enables_forgery (exists-trace): verified (8 steps)
+  ablation_no_binding_breaks_authentication (all-traces): falsified - found trace (10 steps)
+  ablation_no_digest_breaks_authentication (all-traces): falsified - found trace (9 steps)
+
+==============================================================================
